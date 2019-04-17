@@ -32,7 +32,7 @@ def update_series(time_length):
         sin_val = math.sin(time_since * 2 * math.pi / 5)
         cos_val = math.cos(time_since * 2 * math.pi / 5)
         rand_val = random.random() * 10
-        print((time_since, sin_val))
+        
         sin_series.add(time_since, sin_val)
         cos_series.add(time_since, cos_val)
         rand_series.add(time_since, rand_val)
