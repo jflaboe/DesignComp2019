@@ -5,9 +5,9 @@ import random
 
 
 #creating our time series objects. Use TimeSeries.add((t, x)) to add a new datapoint
-sin_series = TimeSeries("sine", 50, fx = 4, fy = 2)
-cos_series = TimeSeries("cosine", 50, fx = 4, fy = 2)
-rand_series = TimeSeries("random", 50, fx = 4, fy = 2)
+sin_series = TimeSeries("sine", 50, fx = 3.6, fy = 1.8)
+cos_series = TimeSeries("cosine", 50, fx = 3.6, fy = 1.8)
+rand_series = TimeSeries("random", 50, fx = 3.6, fy = 1.8)
 
 
 #initiates the control panel
@@ -41,7 +41,7 @@ def update_series(time_length):
 
 
 
-update_series(30)
+update_series(15)
 
 #closes the panel
 cp.callback()
