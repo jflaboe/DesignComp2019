@@ -8,6 +8,7 @@ const int freq = 5000;
 const int resolution = 8;
 const int dutyCycle = 5000;
 
+int pwmval[2] = { 0, 0 };
 int PWM_motor1 = 0;
 int PWM_motor2 = 0;
 int motor1_dir = HIGH;
@@ -19,21 +20,48 @@ int motor2_dir = HIGH;
  * Last three digits are motor 2's PWM value.
  * sign-#-#-#-sign-#-#-#
  */
-int readPWMString(int* newPWMs) {
-  String value = "";
-  while(Serial.available()) { // while serial has anything inputted
+int* readPWMString(int* pwmval) {
+//  String value = "";
+//  while(Serial.available()) { // while serial has anything inputted
+//    int inChar = Serial.read();
+//    if(isDigit(inChar)) {
+//      Serial.print(inChar);
+//      Serial.println();
+//      value += (char)inChar;
+//    }
+//    if(inChar == '\n') {
+//      Serial.print("Number is");
+//      Serial.println(value.toInt());
+//    }
+//  }
+
+  char data_string[100];
+  int counter = 0;
+  int p1;
+  int p2;
+  while(Serial.available()) {
     int inChar = Serial.read();
-    if(isDigit(inChar)) {
-      Serial.print(inChar);
-      Serial.println();
-      value += (char)inChar;
-    }
+    Serial.println((char)inChar);
+    data_string[counter] = inChar;
+    counter++;
+
     if(inChar == '\n') {
-      Serial.print("Number is");
-      Serial.println(value.toInt());
+//      Serial.print("Number is");
+//      Serial.println(value.toInt());
+      sscanf(data_string, "%d %d", &p1, &p2);
+      Serial.println(p1);
+      Serial.println(p2);
+      pwmval[0] = p1;
+      pwmval[1] = p2;
+//      Serial.println(pwmval[0]);
+//      Serial.println(pwmval[1]);
+      
+//      return pwmval;
     }
+//    data_string = Serial.readString();
+//    pwmval = data_string.toInt();
+//    sscanf(data_string, "%d %d", pwmval);
   }
-  return value.toInt();
 }
 
 void setup() {
@@ -55,24 +83,25 @@ void setup() {
 void loop() {
   ledcWrite(PWM1channel,PWM_motor1);
   ledcWrite(PWM2channel,PWM_motor2);
-  digitalWrite(DIR1pin, motor1_dir); // cw/ccw
-  digitalWrite(DIR2pin, motor2_dir); // cw/ccw
+//  digitalWrite(DIR1pin, motor1_dir); // cw/ccw
+//  digitalWrite(DIR2pin, motor2_dir); // cw/ccw
 
-  int newPWMs[2];
   if(Serial.available()) {
-    readPWMString(&newPWMs);
+    readPWMString(pwmval);
+    int new_PWM_motor1 = pwmval[0];
+    int new_PWM_motor2 = pwmval[1];
+//    int new_PWM_motor2 = readPWMString();
 
-    int new_PWM_motor2 = readPWMString();
 //    if(PWM_motor1 != newPWMs[0]) {
       Serial.print("pwm 1 val (new, old):");
-      Serial.print(newPWMs[0]);
+      Serial.print(new_PWM_motor1);
       Serial.print(", ");
       Serial.print(PWM_motor1);
       Serial.println();
-      if(newPWMs[0] < 0) {
+      if(new_PWM_motor1 < 0) {
         motor1_dir = LOW;
         digitalWrite(DIR1pin, motor1_dir); // cw/ccw
-      } else if (newPWMs[0] >= 0) {
+      } else if (new_PWM_motor1 >= 0) {
         digitalWrite(DIR1pin, HIGH); // cw/ccw
         motor1_dir = HIGH;
         digitalWrite(DIR1pin, motor1_dir); // cw/ccw
@@ -84,14 +113,14 @@ void loop() {
     
 //    if(PWM_motor2 != newPWMs[1]) {
       Serial.print("pwm 2 val (new, old):");
-      Serial.print(newPWMs[1]);
+      Serial.print(new_PWM_motor2);
       Serial.print(", ");
       Serial.print(PWM_motor2);
       Serial.println();
-      if(newPWMs[1] < 0) {
+      if(new_PWM_motor2 < 0) {
         motor2_dir = LOW;
         digitalWrite(DIR2pin, motor2_dir); // cw/ccw
-      } else if(newPWMs[1] >= 0) {
+      } else if(new_PWM_motor2 >= 0) {
          motor2_dir = HIGH;
          digitalWrite(DIR2pin, HIGH); // cw/ccw
       }
