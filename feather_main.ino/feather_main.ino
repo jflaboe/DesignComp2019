@@ -17,6 +17,8 @@ void loop() {
    * of the sensor, we should mark a flag saying that we did
    */
 
+
+
   //send sensor data through bluetooth
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.
@@ -37,7 +39,10 @@ void loop() {
      */
     case 0: 
 
+
       break;
+
+
 
     //forward mode
     /*
@@ -50,7 +55,10 @@ void loop() {
      */
     case 1:
 
+
       break;
+
+
 
     //rotate mode
     /*
@@ -61,18 +69,27 @@ void loop() {
      */
     case 2:
 
+
       break;
+
+
+
 
     //calibrate mode
     /*
      * This mode is only run while the robot is at a pre-determined position on the table.
      * When the mode is activated, the robot will drive forward to collect N data points.
      * When the N data points are collected, the robot stops and the position of the Vive
-     * Sensors are calculated. We assume our z-position is 0 and constant.
+     * Sensors are calculated. We assume our z-position is 0 and constant. The mode should
+     * be changed to wait after this mode is finished.
      */
     case 3:
 
+
       break;
+
+
+
 
     //recalibrate mode
     /*
@@ -82,6 +99,17 @@ void loop() {
      * we change our mode to wait.
      */
     case 4:
+
+
+      break;
+
+    //lever mode
+    /*
+     * In this mode, we set the PWM of the lever Servo. This should only take one operation,
+     * so the mode should change directly to wait. We also do not need to recalibrate after this 
+     * mode.
+     */
+    case 5:
 
 
       break;
