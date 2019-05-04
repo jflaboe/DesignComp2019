@@ -1,25 +1,80 @@
+#include "BluetoothSerial.h"
+#include "UserInput.h"
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+
 
 //sensor variables
+BluetoothSerial SerialBT;
+unsigned long prev_time = millis();
+unsigned long next_time = millis();
+
+
+//motor variabel initialization
+const int PWM1pin = 14;//A0;   // GPIO pin 14
+const int PWM2pin = 13;
+const int DIR1pin = 32;   // GPIO pin 32
+const int DIR2pin = 27;
+const int PWM1channel = 1;
+const int PWM2channel = 0;
+const int freq = 5000;
+const int resolution = 8;
+const int dutyCycle = 5000;
+int PWM_motor1 = 0;
+int PWM_motor2 = 0;
+int motor1_dir = HIGH;
+int motor2_dir = HIGH;
+
 
 //mode
 int mode = 0;
 
+//Bluetooth read variables
+char data_in[100];
+char next = 'q';
+int str_index = 0;
+UserInput user;
+
 void setup() {
+  Serial.begin(115200);
+
   //set up bluetooth
+  SerialBT.begin("Blue Hawaiian");
+
   //set up sensors
+
+  //set up motors
+  ledcSetup(PWM1channel,5000,8); // pwm channel, frequency, resolution in bits
+  ledcSetup(PWM2channel, 5000, 8);
+  ledcAttachPin(PWM1pin,PWM1channel); // pin, pwm channel
+  ledcAttachPin(PWM2pin,PWM2channel); // pin, pwm channel
+
+  pinMode(DIR1pin,OUTPUT); // set direction pin to output
+  pinMode(DIR2pin,OUTPUT); // set direction pin to output
+
+  ledcWrite(PWM1channel,PWM_motor1); // pwm channel, speed 0-255
+  ledcWrite(PWM2channel,PWM_motor2); // pwm channel, speed 0-255
+  digitalWrite(DIR1pin, motor1_dir); // set direction to cw/ccw
+  digitalWrite(DIR2pin, motor2_dir); // set direction to cw/ccw
 
 }
 
 void loop() {
+
+  
   //update sensor value variables
+  prev_time = next_time;
+  next_time = millis();
   /*
    * Every loop, we should check if the sensor is ready to be read. If we end up reading the value
    * of the sensor, we should mark a flag saying that we did
    */
-
-
+ 
 
   //send sensor data through bluetooth
+  
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.
    * The data should be sent in JSON format, with keys that are the name of the sensor or 
@@ -38,6 +93,35 @@ void loop() {
      * then keep in wait mode
      */
     case 0: 
+      if (SerialBT.available())
+      {
+        //go until end of a command or until there is nothing left to read
+        
+        while (SerialBT.available() && next != '\n')
+        {
+          next = SerialBT.read();
+          
+
+          
+          data_in[str_index] = next;
+          str_index += 1;
+        }
+
+        //process command
+        if (next == '\n')
+        {
+
+          Serial.println(data_in);
+          sscanf(data_in, "%d %d %d %d %d\n", &user.command, &user.data1, &user.data2, &user.data3, &user.data4);
+          memset(data_in, 0, sizeof data_in);
+          next = 'q';
+          str_index = 0;
+          mode = user.command;
+          
+          
+        }
+      }
+      
 
 
       break;
@@ -111,6 +195,17 @@ void loop() {
      */
     case 5:
 
+
+      break;
+
+    //direct drive mode
+    case 6:
+      ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
+      ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
+      digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
+      digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
+      mode = 0;
+      
 
       break;
   }

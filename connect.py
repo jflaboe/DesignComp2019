@@ -13,7 +13,9 @@ class RobotConnection(threading.Thread):
         self.start()
 
     def callback(self):
-        self.root.quit()
+        self.runnable = False
+        self.join()
+        self.ser.close()
 
     def run(self):
         while self.runnable:
@@ -35,3 +37,5 @@ class RobotConnection(threading.Thread):
 
     def stop_connection(self):
         self.runnable = False
+        self.join()
+        self.ser.close()
