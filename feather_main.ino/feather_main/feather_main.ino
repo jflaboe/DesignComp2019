@@ -4,18 +4,22 @@
 #include <math.h>
 #include <string.h>
 
-
-
 //sensor variables
 BluetoothSerial SerialBT;
 unsigned long prev_time = millis();
 unsigned long next_time = millis();
 
+const int sonar_trig_pin = 26; // A0 pin 
+const int sonar_L_echo_pin = 15;
+const int sonar_R_echo_pin = 33;
+const int sonar_L_val = 0;
+const int sonar_R_val = 0;
+
 
 //motor variabel initialization
-const int PWM1pin = 14;//A0;   // GPIO pin 14
+const int PWM1pin = 14;
 const int PWM2pin = 13;
-const int DIR1pin = 32;   // GPIO pin 32
+const int DIR1pin = 32;
 const int DIR2pin = 27;
 const int PWM1channel = 1;
 const int PWM2channel = 0;
@@ -27,7 +31,6 @@ int PWM_motor2 = 0;
 int motor1_dir = HIGH;
 int motor2_dir = HIGH;
 
-
 //mode
 int mode = 0;
 
@@ -37,6 +40,14 @@ char next = 'q';
 int str_index = 0;
 UserInput user;
 
+void triggerSonar() {
+  digitalWrite(sonar_trig_pin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(sonar_trig_pin, LOW);
+  sonar_R_val = pulseIn(sonar_R_echo_pin, HIGH) / 148;  // in inches
+  sonar_L_val = pulseIn(sonar_L_echo_pin, HIGH) / 148;  // in inches
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -44,6 +55,8 @@ void setup() {
   SerialBT.begin("Blue Hawaiian");
 
   //set up sensors
+  pinMode(sonar_trig_pin, OUTPUT);
+  pinMode(sonar_echo_pin, INPUT);
 
   //set up motors
   ledcSetup(PWM1channel,5000,8); // pwm channel, frequency, resolution in bits
