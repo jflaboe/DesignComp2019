@@ -2,7 +2,7 @@ from keyboard_input import *
 from connect import *
 import time
 
-r = RobotConnection(SERIAL_PORT='COM4')
+r = RobotConnection(SERIAL_PORT='COM6')
 k = KeyboardController()
 
 continue_loop = True
@@ -22,7 +22,7 @@ while continue_loop:
     else:
         r.write('6 0 0 1 1\n')
 
-    time.sleep(0.11)
+    time.sleep(0.2)
     
 
 k.callback()

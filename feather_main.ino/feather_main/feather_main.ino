@@ -74,7 +74,7 @@ void loop() {
  
 
   //send sensor data through bluetooth
-  
+  SerialBT.println(next_time - prev_time);
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.
    * The data should be sent in JSON format, with keys that are the name of the sensor or 
