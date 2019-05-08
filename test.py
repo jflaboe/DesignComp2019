@@ -20,9 +20,9 @@ while continue_loop:
     elif Key.down in k.pressed:
         r.write('6 255 255 0 0\n')
     elif 'a' in k.pressed:
-        r.write('5 90 0 0 0\n')
+        r.write('5 13 0 0 0\n')
     elif 'd' in k.pressed:
-        r.write('5 165 0 0 0\n')
+        r.write('5 28 0 0 0\n')
     else:
         r.write('6 0 0 1 1\n')
 
