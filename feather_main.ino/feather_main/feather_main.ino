@@ -2,20 +2,16 @@
 #include "UserInput.h"
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
+#include <String>
 #include <ESP32Servo.h>
-
-
-
-
+#include <ArduinoJson.h>
 
 //sensor variables
 BluetoothSerial SerialBT;
 unsigned long prev_time = millis();
 unsigned long next_time = millis();
 
-
-//motor variabel initialization
+//motor variable initialization
 const int PWM1pin = 14;//A0;   // GPIO pin 14
 const int PWM2pin = 13;
 const int DIR1pin = 32;   // GPIO pin 32
@@ -37,7 +33,6 @@ int channel = 2;    //which channel do we want to use
 int servo_resolution = 8; //set out resolution for a resonable value
 int angle = 15; //this is about the halfway point (90deg)
 
-
 //mode
 int command = 0;
 
@@ -46,6 +41,10 @@ char data_in[100];
 char next = 'q';
 int str_index = 0;
 UserInput user;
+
+// json
+const int capacity = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_OBJECT_SIZE(4);
+String json_out = "";
 
 void setup() {
   Serial.begin(115200);
@@ -78,13 +77,9 @@ void setup() {
   ledcWrite(channel, angle);
 
   Serial.println("Finished setup");
-  
-
 }
 
 void loop() {
-
-  
   //update sensor value variables
   prev_time = next_time;
   next_time = millis();
@@ -92,10 +87,15 @@ void loop() {
    * Every loop, we should check if the sensor is ready to be read. If we end up reading the value
    * of the sensor, we should mark a flag saying that we did
    */
- 
+  StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
+  all_data["motor1"] = PWM_motor1;
+  all_data["motor2"] = PWM_motor2;
+  serializeJson(doc, json_out);
 
   //send sensor data through bluetooth
   SerialBT.println(next_time - prev_time);
+  SerialBT.println(json_out);
+  json_out = "";
   
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.
