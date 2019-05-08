@@ -32,8 +32,10 @@ int motor2_dir = HIGH;
 
 //servo setup
 int servoPin = 21;
-Servo lever;
-int angle = 30;
+int servo_freq = 50;      //servos operate @ 50Hz so we ned to set the freq to that value
+int channel = 2;    //which channel do we want to use
+int servo_resolution = 8; //set out resolution for a resonable value
+int angle = 15; //this is about the halfway point (90deg)
 
 
 //mode
@@ -71,8 +73,9 @@ void setup() {
 
   Serial.println("Setting up lever");
   pinMode(servoPin, OUTPUT);
-  lever.attach(servoPin);
-  lever.write(angle);
+  ledcSetup(channel, servo_freq, servo_resolution);
+  ledcAttachPin(servoPin, channel);
+  ledcWrite(channel, angle);
 
   Serial.println("Finished setup");
   
@@ -216,7 +219,7 @@ void loop() {
      */
     case 5:
       angle = user.data1;
-      lever.write(angle);
+      ledcWrite(channel, angle);
       command = 0;
 
 
