@@ -26,6 +26,10 @@ while continue_loop:
     else:
         r.write('6 0 0 1 1\n')
 
+    print("\n\nDATA READ\n")
+    for data in r.read_all():
+        print(data)
+
     time.sleep(0.2)
     
 

@@ -3,11 +3,13 @@
 #include <stdio.h>
 #include <math.h>
 #include <String>
-#include <ESP32Servo.h>
 #include <ArduinoJson.h>
+#include <MPU6050_tockn.h>
+#include <Wire.h>
 
 //sensor variables
 BluetoothSerial SerialBT;
+MPU6050 mpu6050(Wire);
 unsigned long prev_time = millis();
 unsigned long next_time = millis();
 
@@ -41,6 +43,8 @@ char data_in[100];
 char next = 'q';
 int str_index = 0;
 UserInput user;
+int last_send = millis();
+const int SEND_DELAY = 500;
 
 // json
 const int capacity = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_OBJECT_SIZE(4);
@@ -48,6 +52,10 @@ String json_out = "";
 
 void setup() {
   Serial.begin(115200);
+  Wire.begin();
+  mpu6050.begin();
+  mpu6050.calcGyroOffsets();
+
 
   //set up bluetooth
   SerialBT.begin("Blue Hawaiian");
@@ -76,26 +84,47 @@ void setup() {
   ledcAttachPin(servoPin, channel);
   ledcWrite(channel, angle);
 
+
+  
+  
   Serial.println("Finished setup");
 }
 
 void loop() {
+  mpu6050.update();
   //update sensor value variables
   prev_time = next_time;
   next_time = millis();
+  Serial.println(next_time - prev_time);
   /*
    * Every loop, we should check if the sensor is ready to be read. If we end up reading the value
    * of the sensor, we should mark a flag saying that we did
    */
-  StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
-  all_data["motor1"] = PWM_motor1;
-  all_data["motor2"] = PWM_motor2;
-  serializeJson(doc, json_out);
+  
 
   //send sensor data through bluetooth
-  SerialBT.println(next_time - prev_time);
-  SerialBT.println(json_out);
-  json_out = "";
+  if(next_time - last_send > SEND_DELAY)
+  {
+    last_send = next_time;
+    StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
+    all_data["motor1"] = PWM_motor1;
+    all_data["motor2"] = PWM_motor2;
+    all_data["temp"] = mpu6050.getTemp();
+    all_data["accX"] = mpu6050.getAccX();
+    all_data["accY"] = mpu6050.getAccY();
+    all_data["accZ"] = mpu6050.getAccZ();
+    all_data["gyroX"] = mpu6050.getGyroX();
+    all_data["gyroY"] = mpu6050.getGyroY();
+    all_data["gyroZ"] = mpu6050.getGyroZ();
+
+    all_data["angleX"] = mpu6050.getAngleX();
+    all_data["angleY"] = mpu6050.getAngleY();
+    all_data["angleZ"] = mpu6050.getAngleZ();
+    serializeJson(all_data, json_out);
+    SerialBT.println(json_out);
+    json_out = "";
+  }
+  
   
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.
@@ -227,6 +256,8 @@ void loop() {
 
     //direct drive mode
     case 6:
+      PWM_motor1 = user.data1;
+      PWM_motor2 = user.data2;
       ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
       ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
       digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw

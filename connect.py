@@ -32,6 +32,11 @@ class RobotConnection(threading.Thread):
         else:
             return None
 
+    def read_all(self):
+        length = len(self.data_in)
+        return [self.data_in[i] for i in range(length)]
+
+
     def write(self, data):
         self.data_out.append(data.encode('utf-8'))
 
