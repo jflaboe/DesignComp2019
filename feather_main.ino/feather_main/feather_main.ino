@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <ESP32Servo.h>
 //hello world
 //sensor variables
 BluetoothSerial SerialBT;
@@ -15,8 +16,14 @@ const int sonar_R_echo_pin = 33;
 const int sonar_L_val = 0;
 const int sonar_R_val = 0;
 
+//lever servo intialization
+Servo myServo;
+const int servoPin = 21;
+pinMode(servoPin, OUTPUT);
+myServo.attach(servoPin);
+myServo.write(0);
 
-//motor variabel initialization
+//motor variable initialization
 const int PWM1pin = 14;
 const int PWM2pin = 13;
 const int DIR1pin = 32;
@@ -207,8 +214,16 @@ void loop() {
      * mode.
      */
     case 5:
-
-
+      if(user.data1<150 && user.data>20)
+      {
+        myServo.write(user.data1); //user.data1 needs to be an angle inputted into the servo, 0-45
+        mode=0;
+      }
+      else
+      {
+        //Can trigger error or send error message here
+        mode=0;
+      }
       break;
 
     //direct drive mode
