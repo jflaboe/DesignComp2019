@@ -4,29 +4,21 @@
 #include <math.h>
 #include <string.h>
 #include <ESP32Servo.h>
-//hello world
+
+
+
+
+
 //sensor variables
 BluetoothSerial SerialBT;
 unsigned long prev_time = millis();
 unsigned long next_time = millis();
 
-const int sonar_trig_pin = 26; // A0 pin 
-const int sonar_L_echo_pin = 15;
-const int sonar_R_echo_pin = 33;
-const int sonar_L_val = 0;
-const int sonar_R_val = 0;
 
-//lever servo intialization
-Servo myServo;
-const int servoPin = 21;
-pinMode(servoPin, OUTPUT);
-myServo.attach(servoPin);
-myServo.write(0);
-
-//motor variable initialization
-const int PWM1pin = 14;
+//motor variabel initialization
+const int PWM1pin = 14;//A0;   // GPIO pin 14
 const int PWM2pin = 13;
-const int DIR1pin = 32;
+const int DIR1pin = 32;   // GPIO pin 32
 const int DIR2pin = 27;
 const int PWM1channel = 1;
 const int PWM2channel = 0;
@@ -38,22 +30,20 @@ int PWM_motor2 = 0;
 int motor1_dir = HIGH;
 int motor2_dir = HIGH;
 
+//servo setup
+int servoPin = 21;
+Servo lever;
+int angle = 30;
+
+
 //mode
-int mode = 0;
+int command = 0;
 
 //Bluetooth read variables
 char data_in[100];
 char next = 'q';
 int str_index = 0;
 UserInput user;
-
-void triggerSonar() {
-  digitalWrite(sonar_trig_pin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(sonar_trig_pin, LOW);
-  sonar_R_val = pulseIn(sonar_R_echo_pin, HIGH) / 148;  // in inches
-  sonar_L_val = pulseIn(sonar_L_echo_pin, HIGH) / 148;  // in inches
-}
 
 void setup() {
   Serial.begin(115200);
@@ -62,10 +52,9 @@ void setup() {
   SerialBT.begin("Blue Hawaiian");
 
   //set up sensors
-  pinMode(sonar_trig_pin, OUTPUT);
-  pinMode(sonar_echo_pin, INPUT);
 
   //set up motors
+  Serial.println("Setting up motors");
   ledcSetup(PWM1channel,5000,8); // pwm channel, frequency, resolution in bits
   ledcSetup(PWM2channel, 5000, 8);
   ledcAttachPin(PWM1pin,PWM1channel); // pin, pwm channel
@@ -74,10 +63,19 @@ void setup() {
   pinMode(DIR1pin,OUTPUT); // set direction pin to output
   pinMode(DIR2pin,OUTPUT); // set direction pin to output
 
+  
   ledcWrite(PWM1channel,PWM_motor1); // pwm channel, speed 0-255
   ledcWrite(PWM2channel,PWM_motor2); // pwm channel, speed 0-255
   digitalWrite(DIR1pin, motor1_dir); // set direction to cw/ccw
   digitalWrite(DIR2pin, motor2_dir); // set direction to cw/ccw
+
+  Serial.println("Setting up lever");
+  pinMode(servoPin, OUTPUT);
+  lever.attach(servoPin);
+  lever.write(angle);
+
+  Serial.println("Finished setup");
+  
 
 }
 
@@ -95,6 +93,7 @@ void loop() {
 
   //send sensor data through bluetooth
   SerialBT.println(next_time - prev_time);
+  
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.
    * The data should be sent in JSON format, with keys that are the name of the sensor or 
@@ -104,7 +103,7 @@ void loop() {
 
   //perform update based on mode
 
-  switch (mode){
+  switch (command){
 
     //wait mode
     /*
@@ -115,6 +114,7 @@ void loop() {
     case 0: 
       if (SerialBT.available())
       {
+        
         //go until end of a command or until there is nothing left to read
         
         while (SerialBT.available() && next != '\n')
@@ -124,6 +124,7 @@ void loop() {
 
           
           data_in[str_index] = next;
+          Serial.println(data_in);
           str_index += 1;
         }
 
@@ -136,7 +137,7 @@ void loop() {
           memset(data_in, 0, sizeof data_in);
           next = 'q';
           str_index = 0;
-          mode = user.command;
+          command = user.command;
           
           
         }
@@ -214,16 +215,11 @@ void loop() {
      * mode.
      */
     case 5:
-      if(user.data1<150 && user.data>20)
-      {
-        myServo.write(user.data1); //user.data1 needs to be an angle inputted into the servo, 0-45
-        mode=0;
-      }
-      else
-      {
-        //Can trigger error or send error message here
-        mode=0;
-      }
+      angle = user.data1;
+      lever.write(angle);
+      command = 0;
+
+
       break;
 
     //direct drive mode
@@ -232,7 +228,7 @@ void loop() {
       ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
       digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
       digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
-      mode = 0;
+      command = 0;
       
 
       break;

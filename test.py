@@ -8,7 +8,7 @@ k = KeyboardController()
 continue_loop = True
 
 while continue_loop:
-    
+    print(k.pressed)
     if 'q' in k.pressed:
         continue_loop = False
     elif Key.up in k.pressed:
@@ -19,6 +19,10 @@ while continue_loop:
         r.write('6 255 255 0 1\n')
     elif Key.down in k.pressed:
         r.write('6 255 255 0 0\n')
+    elif 'a' in k.pressed:
+        r.write('5 90 0 0 0\n')
+    elif 'd' in k.pressed:
+        r.write('5 165 0 0 0\n')
     else:
         r.write('6 0 0 1 1\n')
 
