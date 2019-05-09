@@ -3,13 +3,18 @@
 #include <stdio.h>
 #include <math.h>
 #include <String>
+#include <ESP32Servo.h>
 #include <ArduinoJson.h>
-#include <MPU6050_tockn.h>
-#include <Wire.h>
 
 //sensor variables
+const int laserPin = 4;
+const int phototransistorPin = 39;
+int prev_laser_reading = 0;
+int curr_laser_reading = 0;
+int laser_diff = 0;
+int laser_time_elapsed = 0;
+
 BluetoothSerial SerialBT;
-MPU6050 mpu6050(Wire);
 unsigned long prev_time = millis();
 unsigned long next_time = millis();
 
@@ -27,8 +32,6 @@ int PWM_motor1 = 0;
 int PWM_motor2 = 0;
 int motor1_dir = HIGH;
 int motor2_dir = HIGH;
-int timer = 0;
-int time_delay = 0;
 
 //servo setup
 int servoPin = 21;
@@ -66,8 +69,10 @@ void setup() {
   //set up bluetooth
   SerialBT.begin("Blue Hawaiian");
 
+  //set up sensors
+  pinMode(laserPin, OUTPUT);
+  pinMode(phototransistorPin, INPUT);
   
-
   //set up motors
   Serial.println("Setting up motors");
   ledcSetup(PWM1channel,5000,8); // pwm channel, frequency, resolution in bits
@@ -93,16 +98,40 @@ void setup() {
 }
 
 void loop() {
-  mpu6050.update();
+  // Create JSON document
+  // All sensor values are placed into this
+  StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
+  all_data["motor1"] = PWM_motor1;
+  all_data["motor2"] = PWM_motor2;
+  all_data["time_diff"] = next_time-prev_time;
+  
   //update sensor value variables
   prev_time = next_time;
-  next_time = millis();
+  next_time = millis();'
+  laser_time_elapsed += (next_time - prev_time);
+
+  if (laser_time_elapsed > 50) {
+    if(laser_on) {
+      curr_laser_reading = analogRead(phototransistorPin);
+      laser_on = false;
+      digitalWrite(laserPin, LOW);
+
+      laser_diff = curr_laser_reading - prev_laser_reading;
+      all_data["laser_diff"] = laser_diff;
+      all_data["laser_diff_time"] = next_time;
+    } else {
+      prev_laser_reading = analogRead(phototransistorPin);
+      laser_on = true;
+      digitalWrite(laserPin, HIGH);
+    }
+
+    laser_time_elapsed = 0;
+  }
   
   /*
    * Every loop, we should check if the sensor is ready to be read. If we end up reading the value
    * of the sensor, we should mark a flag saying that we did
    */
-  
 
   //send sensor data through bluetooth
   if(next_time - last_send > SEND_DELAY)
@@ -119,6 +148,8 @@ void loop() {
     json_out = "";
   }
   
+  SerialBT.println(json_out);
+  json_out = "";
   
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.

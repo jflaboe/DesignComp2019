@@ -38,7 +38,7 @@ void loop() {
   
   delay(50);
 
-  myServo.write(angle);
+//  myServo.write(angle);
 //  ledcWrite(channel, angle);
 //  delay(50);
 }
