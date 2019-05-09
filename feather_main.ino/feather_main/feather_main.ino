@@ -3,13 +3,17 @@
 #include <stdio.h>
 #include <math.h>
 #include <String>
+#include <ESP32Servo.h>
 #include <ArduinoJson.h>
-#include <MPU6050_tockn.h>
-#include <Wire.h>
 
 //sensor variables
+const int laserPin = 4;
+const int phototransistorPin = 39;
+int prev_laser_reading = 0;
+int curr_laser_reading = 0;
+int laser_diff = 0;
+
 BluetoothSerial SerialBT;
-MPU6050 mpu6050(Wire);
 unsigned long prev_time = millis();
 unsigned long next_time = millis();
 
@@ -27,8 +31,6 @@ int PWM_motor1 = 0;
 int PWM_motor2 = 0;
 int motor1_dir = HIGH;
 int motor2_dir = HIGH;
-int timer = 0;
-int time_delay = 0;
 
 //servo setup
 int servoPin = 21;
@@ -45,25 +47,21 @@ char data_in[100];
 char next = 'q';
 int str_index = 0;
 UserInput user;
-int last_send = millis();
-const int SEND_DELAY = 500;
 
 // json
 const int capacity = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_OBJECT_SIZE(4);
 String json_out = "";
 
 void setup() {
-  Serial.begin(115200);
-  Wire.begin();
-  mpu6050.begin();
-  mpu6050.calcGyroOffsets();
-
+  Serial.begin(9600);
 
   //set up bluetooth
   SerialBT.begin("Blue Hawaiian");
 
   //set up sensors
-
+  pinMode(laserPin, OUTPUT);
+  pinMode(phototransistorPin, INPUT);
+  
   //set up motors
   Serial.println("Setting up motors");
   ledcSetup(PWM1channel,5000,8); // pwm channel, frequency, resolution in bits
@@ -86,49 +84,41 @@ void setup() {
   ledcAttachPin(servoPin, channel);
   ledcWrite(channel, angle);
 
-
-  
-  
   Serial.println("Finished setup");
 }
 
 void loop() {
-  mpu6050.update();
+  // Create JSON document
+  // All sensor values are placed into this
+  StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
+  all_data["motor1"] = PWM_motor1;
+  all_data["motor2"] = PWM_motor2;
+  all_data["time_diff"] = next_time-prev_time;
+  
   //update sensor value variables
   prev_time = next_time;
   next_time = millis();
+  prev_laser_reading = analogRead(phototransistorPin);
+  if (next_time - prev_time > 50) {
+    curr_laser_reading = analogRead(phototransistorPin);
+    laser_diff = curr_laser_reading - prev_laser_reading;
+    all_data["laser_diff"] = laser_diff;
+  }
   
   /*
    * Every loop, we should check if the sensor is ready to be read. If we end up reading the value
    * of the sensor, we should mark a flag saying that we did
    */
-  
+
+
 
   //send sensor data through bluetooth
-  if(next_time - last_send > SEND_DELAY)
-  {
-    last_send = next_time;
-    StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
-    all_data["mode"] = command;
-    all_data["motor1"] = PWM_motor1;
-    all_data["motor2"] = PWM_motor2;
-    all_data["temp"] = mpu6050.getTemp();
-    all_data["accX"] = mpu6050.getAccX();
-    all_data["accY"] = mpu6050.getAccY();
-    all_data["accZ"] = mpu6050.getAccZ();
-    all_data["gyroX"] = mpu6050.getGyroX();
-    all_data["gyroY"] = mpu6050.getGyroY();
-    all_data["gyroZ"] = mpu6050.getGyroZ();
-
-    all_data["angleX"] = mpu6050.getAngleX();
-    all_data["angleY"] = mpu6050.getAngleY();
-    all_data["angleZ"] = mpu6050.getAngleZ();
-    serializeJson(all_data, json_out);
-    SerialBT.println(json_out);
-    Serial.println(json_out);
-    json_out = "";
-  }
+    
+  // send JSON to string
+  serializeJson(doc, json_out);
   
+  SerialBT.println(json_out);
+  json_out = "";
   
   /*
    * Send the current CPU time and all the sensor data that has been read this loop.
@@ -169,7 +159,7 @@ void loop() {
         {
 
           Serial.println(data_in);
-          sscanf(data_in, "%d %d %d %d %d\n", &user.command, &user.data1, &user.data2, &user.data3, &user.data4, &user.data5);
+          sscanf(data_in, "%d %d %d %d %d\n", &user.command, &user.data1, &user.data2, &user.data3, &user.data4);
           memset(data_in, 0, sizeof data_in);
           next = 'q';
           str_index = 0;
@@ -195,23 +185,7 @@ void loop() {
      * the instruction is complete, and the mode is change to recalibrate mode
      */
     case 1:
-      if (time_delay == 0)
-      {
-        PWM_motor1 = user.data1;
-        PWM_motor2 = user.data2;
-        ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
-        ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
-        digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
-        digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
-        time_delay = user.data5 + millis();
-      }
-      else if(millis() > time_delay){
-        time_delay = 0;
-        ledcWrite(PWM1channel,0); // pwm channel, speed 0-255
-        ledcWrite(PWM2channel,0); // pwm channel, speed 0-255
-        digitalWrite(DIR1pin, 0); // set direction to cw/ccw
-        digitalWrite(DIR2pin, 0); // set direction to cw/ccw
-      }
+
 
       break;
 
@@ -276,8 +250,6 @@ void loop() {
 
     //direct drive mode
     case 6:
-      PWM_motor1 = user.data1;
-      PWM_motor2 = user.data2;
       ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
       ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
       digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
