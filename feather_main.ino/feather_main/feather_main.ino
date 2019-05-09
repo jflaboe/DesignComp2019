@@ -12,6 +12,7 @@ const int phototransistorPin = 39;
 int prev_laser_reading = 0;
 int curr_laser_reading = 0;
 int laser_diff = 0;
+int laser_time_elapsed = 0;
 
 BluetoothSerial SerialBT;
 unsigned long prev_time = millis();
@@ -97,20 +98,31 @@ void loop() {
   
   //update sensor value variables
   prev_time = next_time;
-  next_time = millis();
-  prev_laser_reading = analogRead(phototransistorPin);
-  if (next_time - prev_time > 50) {
-    curr_laser_reading = analogRead(phototransistorPin);
-    laser_diff = curr_laser_reading - prev_laser_reading;
-    all_data["laser_diff"] = laser_diff;
+  next_time = millis();'
+  laser_time_elapsed += (next_time - prev_time);
+
+  if (laser_time_elapsed > 50) {
+    if(laser_on) {
+      curr_laser_reading = analogRead(phototransistorPin);
+      laser_on = false;
+      digitalWrite(laserPin, LOW);
+
+      laser_diff = curr_laser_reading - prev_laser_reading;
+      all_data["laser_diff"] = laser_diff;
+      all_data["laser_diff_time"] = next_time;
+    } else {
+      prev_laser_reading = analogRead(phototransistorPin);
+      laser_on = true;
+      digitalWrite(laserPin, HIGH);
+    }
+
+    laser_time_elapsed = 0;
   }
   
   /*
    * Every loop, we should check if the sensor is ready to be read. If we end up reading the value
    * of the sensor, we should mark a flag saying that we did
    */
-
-
 
   //send sensor data through bluetooth
     
