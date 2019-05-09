@@ -14,12 +14,16 @@ import numpy as np
 style.use('ggplot')
 
 
-class Map:
-    def __init__(self, root):
-        self.c = Canvas(root, width=200, height=200)
+class Map(Frame):
+    def __init__(self, root, *args, **kwargs):
+        Frame.__init__(self, root, *args, **kwargs)
+        self.c = Canvas(self, width=200, height=200)
+        self.c.pack()
         self.loc = (0, 0)
         self.dir = (0, 0)
         self.lines = []
+        self.root = root
+        self.pack()
 
 
 
