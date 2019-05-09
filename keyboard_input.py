@@ -1,4 +1,4 @@
-from pynput.keyboard import Key, Listener
+from pynput.keyboard import Key, Listener, KeyCode
 import threading
 
 

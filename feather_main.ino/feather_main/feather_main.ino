@@ -27,6 +27,8 @@ int PWM_motor1 = 0;
 int PWM_motor2 = 0;
 int motor1_dir = HIGH;
 int motor2_dir = HIGH;
+int timer = 0;
+int time_delay = 0;
 
 //servo setup
 int servoPin = 21;
@@ -95,7 +97,7 @@ void loop() {
   //update sensor value variables
   prev_time = next_time;
   next_time = millis();
-  Serial.println(next_time - prev_time);
+  
   /*
    * Every loop, we should check if the sensor is ready to be read. If we end up reading the value
    * of the sensor, we should mark a flag saying that we did
@@ -107,6 +109,7 @@ void loop() {
   {
     last_send = next_time;
     StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
+    all_data["mode"] = command;
     all_data["motor1"] = PWM_motor1;
     all_data["motor2"] = PWM_motor2;
     all_data["temp"] = mpu6050.getTemp();
@@ -122,6 +125,7 @@ void loop() {
     all_data["angleZ"] = mpu6050.getAngleZ();
     serializeJson(all_data, json_out);
     SerialBT.println(json_out);
+    Serial.println(json_out);
     json_out = "";
   }
   
@@ -165,7 +169,7 @@ void loop() {
         {
 
           Serial.println(data_in);
-          sscanf(data_in, "%d %d %d %d %d\n", &user.command, &user.data1, &user.data2, &user.data3, &user.data4);
+          sscanf(data_in, "%d %d %d %d %d\n", &user.command, &user.data1, &user.data2, &user.data3, &user.data4, &user.data5);
           memset(data_in, 0, sizeof data_in);
           next = 'q';
           str_index = 0;
@@ -191,7 +195,23 @@ void loop() {
      * the instruction is complete, and the mode is change to recalibrate mode
      */
     case 1:
-
+      if (time_delay == 0)
+      {
+        PWM_motor1 = user.data1;
+        PWM_motor2 = user.data2;
+        ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
+        digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
+        time_delay = user.data5 + millis();
+      }
+      else if(millis() > time_delay){
+        time_delay = 0;
+        ledcWrite(PWM1channel,0); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,0); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, 0); // set direction to cw/ccw
+        digitalWrite(DIR2pin, 0); // set direction to cw/ccw
+      }
 
       break;
 

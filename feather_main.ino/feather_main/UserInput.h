@@ -4,4 +4,5 @@ struct UserInput {
     int data2;
     int data3;
     int data4;
+    int data5;
 };

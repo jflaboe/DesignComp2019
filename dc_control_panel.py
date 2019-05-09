@@ -14,6 +14,15 @@ import numpy as np
 style.use('ggplot')
 
 
+class Map:
+    def __init__(self, root):
+        self.c = Canvas(root, width=200, height=200)
+        self.loc = (0, 0)
+        self.dir = (0, 0)
+        self.lines = []
+
+
+
 class TimeSeries:
     def __init__(self, name, max_entries, fx=5, fy=4, dpi=100, update = 100):
         self.max_entries = max_entries
