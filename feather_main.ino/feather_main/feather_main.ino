@@ -247,7 +247,7 @@ void loop() {
       }
       //PID control
       else{
-        /*
+        
         int Eint=0;
         float edot=0;
         float u=0;
@@ -268,7 +268,7 @@ void loop() {
         edot= error-error_prev;
         u = kp_P*error + ki_P*Eint +kd_P*edot;
         error_prev=error;
-        */
+      
       }
 
       break;
