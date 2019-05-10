@@ -247,7 +247,28 @@ void loop() {
       }
       //PID control
       else{
-        
+        /*
+        int Eint=0;
+        float edot=0;
+        float u=0;
+        float error=0;
+        float unew=0;
+        float error_prev=0;
+        float kp=0;
+        float ki=0;
+        float kdot=0;
+
+        //Read in from (TX3=pin 8, RX3 = pin 7)
+        double x_pos_1=serial3.read() ;
+        double y_pos_1=serial3.read() ;
+        double x_pos_2=serial.read() ;
+        double y_pos_2=serial.read() ;
+        error =  ;
+        Eint += error;
+        edot= error-error_prev;
+        u = kp_P*error + ki_P*Eint +kd_P*edot;
+        error_prev=error;
+        */
       }
 
       break;
