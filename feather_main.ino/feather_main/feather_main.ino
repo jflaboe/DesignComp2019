@@ -42,19 +42,29 @@ int angle = 15; //this is about the halfway point (90deg)
 
 //mode
 int command = 0;
+bool in_command = false;
+int last_completed = 0;
 
 //Bluetooth read variables
 char data_in[100];
 char next = 'q';
 int str_index = 0;
 UserInput user;
+UserInput next_command;
+int last_send = millis();
+const int SEND_DELAY = 500;
 
 // json
 const int capacity = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_OBJECT_SIZE(4);
 String json_out = "";
 
 void setup() {
-  Serial.begin(9600);
+  user.command = 0;
+  Serial.begin(115200);
+  Wire.begin();
+  mpu6050.begin();
+  mpu6050.calcGyroOffsets();
+
 
   //set up bluetooth
   SerialBT.begin("Blue Hawaiian");
@@ -69,22 +79,21 @@ void setup() {
   ledcSetup(PWM2channel, 5000, 8);
   ledcAttachPin(PWM1pin,PWM1channel); // pin, pwm channel
   ledcAttachPin(PWM2pin,PWM2channel); // pin, pwm channel
-
   pinMode(DIR1pin,OUTPUT); // set direction pin to output
   pinMode(DIR2pin,OUTPUT); // set direction pin to output
-
-  
   ledcWrite(PWM1channel,PWM_motor1); // pwm channel, speed 0-255
   ledcWrite(PWM2channel,PWM_motor2); // pwm channel, speed 0-255
   digitalWrite(DIR1pin, motor1_dir); // set direction to cw/ccw
   digitalWrite(DIR2pin, motor2_dir); // set direction to cw/ccw
 
+  //set up lever
   Serial.println("Setting up lever");
   pinMode(servoPin, OUTPUT);
   ledcSetup(channel, servo_freq, servo_resolution);
   ledcAttachPin(servoPin, channel);
   ledcWrite(channel, angle);
 
+  
   Serial.println("Finished setup");
 }
 
@@ -125,9 +134,19 @@ void loop() {
    */
 
   //send sensor data through bluetooth
+  if(next_time - last_send > SEND_DELAY)
+  {
     
-  // send JSON to string
-  serializeJson(doc, json_out);
+    last_send = next_time;
+    StaticJsonDocument<capacity> all_data; // will hold all sensor data + CPU time
+    all_data["last_executed"] = last_completed;
+    all_data["mode"] = command;
+   
+    serializeJson(all_data, json_out);
+    SerialBT.println(json_out);
+    //Serial.println(json_out);
+    json_out = "";
+  }
   
   SerialBT.println(json_out);
   json_out = "";
@@ -139,18 +158,8 @@ void loop() {
    */
 
 
-  //perform update based on mode
 
-  switch (command){
-
-    //wait mode
-    /*
-     * In this mode, we read one instruction from the bluetooth device if available
-     * and set the mode to the corresponding value. If there is no instruction available,
-     * then keep in wait mode
-     */
-    case 0: 
-      if (SerialBT.available())
+  if (SerialBT.available())
       {
         
         //go until end of a command or until there is nothing left to read
@@ -162,7 +171,7 @@ void loop() {
 
           
           data_in[str_index] = next;
-          Serial.println(data_in);
+          //Serial.println(data_in);
           str_index += 1;
         }
 
@@ -171,22 +180,50 @@ void loop() {
         {
 
           Serial.println(data_in);
-          sscanf(data_in, "%d %d %d %d %d\n", &user.command, &user.data1, &user.data2, &user.data3, &user.data4);
+          sscanf(data_in, "%d %d %d %d %d %d %d\n", &next_command.id, &next_command.command, &next_command.data1, &next_command.data2, &next_command.data3, &next_command.data4, &next_command.data5);
           memset(data_in, 0, sizeof data_in);
           next = 'q';
           str_index = 0;
-          command = user.command;
           
+          if (next_command.command == 0 || (!in_command && next_command.id > last_completed)){
+            Serial.println("data accepted!");
+            last_completed = user.id;
+            user.id = next_command.id;
+            user.command = next_command.command;
+            user.data1 = next_command.data1;
+            user.data2 = next_command.data2;
+            user.data3 = next_command.data3;
+            user.data4 = next_command.data4;
+            user.data5 = next_command.data5;
+          }
+  
           
         }
       }
       
 
 
+      
+  //perform update based on mode
+
+  switch (user.command){ 
+      
+
+    //hault mode
+    /*
+     * Stop the motors
+     */
+     case 0:
+      PWM_motor1 = 0;
+      PWM_motor2 = 0;
+      ledcWrite(PWM1channel, 0); // pwm channel, speed 0-255
+      ledcWrite(PWM2channel, 0); // pwm channel, speed 0-255
+      digitalWrite(DIR1pin, 0); // set direction to cw/ccw
+      digitalWrite(DIR2pin, 0);
+      in_command = false;
       break;
 
-
-
+      
     //forward mode
     /*
      * In this mode, we try to move both wheels such that the vehicle moves perfectly straight
@@ -197,7 +234,33 @@ void loop() {
      * the instruction is complete, and the mode is change to recalibrate mode
      */
     case 1:
-
+      if (!in_command)
+      {
+        Serial.println("setting in_command to true");
+        in_command = true;
+        PWM_motor1 = user.data1;
+        PWM_motor2 = user.data2;
+        ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
+        digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
+        time_delay = user.data5 + millis();
+      }
+      else if(millis() > time_delay){
+        time_delay = 0;
+        ledcWrite(PWM1channel,0); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,0); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, 0); // set direction to cw/ccw
+        digitalWrite(DIR2pin, 0); // set direction to cw/ccw
+        user.command = 0;
+        in_command = false;
+        last_completed = user.id; 
+        user.command = 0;
+      }
+      //PID control
+      else{
+        
+      }
 
       break;
 
@@ -253,20 +316,31 @@ void loop() {
      * mode.
      */
     case 5:
-      angle = user.data1;
-      ledcWrite(channel, angle);
-      command = 0;
+      if (!in_command){
+        angle = user.data1;
+        ledcWrite(channel, angle);
+        last_completed=user.id;
+        user.command = 0;
+        Serial.println(last_completed);
+      }
+      
 
 
       break;
 
     //direct drive mode
     case 6:
-      ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
-      ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
-      digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
-      digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
-      command = 0;
+      if (!in_command){
+        PWM_motor1 = user.data1;
+        PWM_motor2 = user.data2;
+        ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
+        digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
+        last_completed=user.id;
+        user.command = 0;
+      }
+      
       
 
       break;

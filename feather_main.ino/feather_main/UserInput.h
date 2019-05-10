@@ -1,4 +1,5 @@
 struct UserInput {
+    int id;
     int command;
     int data1;
     int data2;

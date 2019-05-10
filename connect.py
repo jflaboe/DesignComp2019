@@ -34,7 +34,7 @@ class RobotConnection(threading.Thread):
 
     def read_all(self):
         length = len(self.data_in)
-        return [self.data_in[i] for i in range(length)]
+        return [self.data_in.pop(0) for i in range(length)]
 
 
     def write(self, data):

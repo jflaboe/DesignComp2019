@@ -1,5 +1,5 @@
 from keyboard_input import *
-from connect import *
+from command import *
 import time
 import json
 
