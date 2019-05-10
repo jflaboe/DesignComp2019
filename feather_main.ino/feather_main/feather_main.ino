@@ -448,11 +448,45 @@ error_prev_rot=error_rot;
 */
 
 
-
+/*
 //PID for arc
-//
+//given arc center, angle to go on arc
+        //Distance control
+        //given x_pos_init,y_pos_init,x_pos,y_pos,i_vec,j_vec,d
+        //error_d is just current distance from point
+
+        i_vec_current=x_pos_f-x_pos;
+        j_vec_current=y_pos_f-y_pos;
+        distance_current=math.sqrt(i_vec_current*i_vec_current + j_vec_current*j_vec_current);
+        error_d = distance_current;
+        Eint_d += error_d;
+        edot_d= error_d-error_prev_d;
+        u_d = kp_d*error_d + ki_d*Eint_d +kd_d*edot_d;
+        error_prev_d=error_d;
+
+      //Path control 1 for init and current angle
+      disp_unit_i=i_vec_current/distance_current;
+      disp_unit_j=j_vec_current/distance_current;
+      radius_init=sqrt((x_arc_cent-x_init)*(x_arc_cent-x_init)+(y_arc_cent-y_init)*(y_arc_cent-y_init));
+      radius_current=sqrt((x_arc_cent-x_pos)*(x_arc_cent-x_pos)+(y_arc_cent-y_pos)*(y_arc_cent-y_pos))
+      error_r = radius_current-radius_init;
+      Eint_r += error_r;
+      edot_r= error_r-error_prev_r;
+      u_r = kp_r*error_r + ki_r*Eint_r +kd_r*edot_r;
+      error_prev_r=error_r;
 
 
+
+      //Path control 2 for orientation
+      sin_theta_o = cross_product(ivec,jvec,disp_unit_i,disp_unit_j);//ivec,jvec are from the vive and give it's orientation
+      //crossed with tangent vector from arc which is (x,y)=(disp_unit_i,disp_unit_j)
+      error_theta_o = math.asin(sin_theta_o);//probably don't need arcsin
+      Eint_theta_o += error_theta_o;
+      edot_theta_o= error_theta_o-error_prev_theta_o;
+      u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
+      error_prev_theta_o=error_theta_o;
+
+*/
 
 
 
