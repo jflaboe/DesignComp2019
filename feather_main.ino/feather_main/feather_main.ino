@@ -433,8 +433,46 @@ void loop() {
       
 }
 
+//PID for Rotation
+/*
+//desired_angle will be inputted
+orientation_angle = vector_angle(ivec,jvec)
+error_rot = desired_angle-orientation angle;
+Eint_rot += error_rot;
+edot_rot= error_rot-error_prev_rot;
+u_rot = kp_rot*error_rot + ki_rot*Eint_rot +kd_rot*edot_rot;
+error_prev_rot=error_rot;
+//if u_rot is positive then need to go counterclockwise,so drive left wheel backwards and right wheel forwards
+//if u_rot is negative need to go clockwise, so drive left wheel forward and right wheel forwards
 
+*/
+float vector_angle(float ivec,float jvec){
+  float angle;
+  if (ivec>0&& jvec>0){
+  angle = math.arctan(jvec/ivec);
+  return angle;
+  }
+  else if ((ivec<0 && jvec>0)||(ivec<0 && jvec<0)){
+    angle = math.arctan(jvec/arctan)+180;
+    return angle;
+  }
+  /*
+  else if (ivec<0 && jvec<0){
+    angle = math.arctan(jvec/arctan)+180;
+    return angle;
+  }
+  */
+  else if (ivec>0 && jvec<0 ){
+    angle = math.arctan(jvec/arctan)+360;
+    return angle;
+  }
+}
 
+float dot_product(float x_1,float y_1,float x_2,float y_2){
+    float cos_x;
+    sin_x = x_1*x_2-y_1*y_2;
+    return cos_x;
+}
 float cross_product(float x_1,float y_1,float x_2,float y_2){
     float sin_x;
     sin_x = x_1*y_2-x_2*y_1;
