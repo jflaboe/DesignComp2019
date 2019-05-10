@@ -29,6 +29,23 @@ int motor1_dir = HIGH;
 int motor2_dir = HIGH;
 int timer = 0;
 int time_delay = 0;
+//Time of Flight Initialization
+VL53L1X Distance_Sensor;
+Wire.begin();
+Wire.setClock(400000);
+Distance_Sensor.setTimeout(500);
+// Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
+// You can change these settings to adjust the performance of the sensor, but
+// the minimum timing budget is 20 ms for short distance mode
+Distance_Sensor.setDistanceMode(VL53L1X::Short);
+Distance_Sensor.setMeasurementTimingBudget(50000);
+
+// Start continuous readings at a rate of one measurement every 50 ms (the
+// inter-measurement period). This period should be at least as long as the
+// timing budget.
+Distance_Sensor.startContinuous(50);
+
+
 
 //servo setup
 int servoPin = 21;
