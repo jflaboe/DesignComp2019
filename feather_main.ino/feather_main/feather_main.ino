@@ -414,14 +414,14 @@ void loop() {
       disp_unit_i=i_vec_current/distance_current;
       disp_unit_j=j_vec_current/distance_current;
       sin_theta_e = cross_product(disp_unit_i,disp_unit_j,i_vec_init,j_vec_init);
-      error_theta_e = math.arcsin(sin_theta_e);//probably don't need arcsin
+      error_theta_e = math.asin(sin_theta_e);//probably don't need arcsin
       Eint_theta_e += error_theta_e;
       edot_theta_e= error_theta_e-error_prev_theta_e;
       u_theta_e = kp_theta_e*error_theta_e + ki_theta_e*Eint_theta_e +kd_theta_e*edot_theta_e;
       error_prev_theta_e=error_theta_e;
       //Path control 2 for orientation
       sin_theta_o = cross_product(ivec,jvec,i_vec_init,j_vec_init);//ivec,jvec are from the vive and give it's orientation
-      error_theta_o = math.arcsin(sin_theta_o);//probably don't need arcsin
+      error_theta_o = math.asin(sin_theta_o);//probably don't need arcsin
       Eint_theta_o += error_theta_o;
       edot_theta_o= error_theta_o-error_prev_theta_o;
       u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
@@ -446,24 +446,34 @@ error_prev_rot=error_rot;
 //if u_rot is negative need to go clockwise, so drive left wheel forward and right wheel forwards
 
 */
+
+
+
+//PID for arc
+//
+
+
+
+
+
 float vector_angle(float ivec,float jvec){
   float angle;
   if (ivec>0&& jvec>0){
-  angle = math.arctan(jvec/ivec);
+  angle = math.atan(jvec/ivec);
   return angle;
   }
   else if ((ivec<0 && jvec>0)||(ivec<0 && jvec<0)){
-    angle = math.arctan(jvec/arctan)+180;
+    angle = math.atan(jvec/ivec)+180;
     return angle;
   }
   /*
   else if (ivec<0 && jvec<0){
-    angle = math.arctan(jvec/arctan)+180;
+    angle = math.atan(jvec/ivec)+180;
     return angle;
   }
   */
   else if (ivec>0 && jvec<0 ){
-    angle = math.arctan(jvec/arctan)+360;
+    angle = math.atan(jvec/ivec)+360;
     return angle;
   }
 }
