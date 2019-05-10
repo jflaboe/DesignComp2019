@@ -419,7 +419,7 @@ void loop() {
       edot_theta_e= error_theta_e-error_prev_theta_e;
       u_theta_e = kp_theta_e*error_theta_e + ki_theta_e*Eint_theta_e +kd_theta_e*edot_theta_e;
       error_prev_theta_e=error_theta_e;
-      //Path control 2 for current and final angle
+      //Path control 2 for orientation
       sin_theta_o = cross_product(ivec,jvec,i_vec_init,j_vec_init);//ivec,jvec are from the vive and give it's orientation
       error_theta_o = math.arcsin(sin_theta_o);//probably don't need arcsin
       Eint_theta_o += error_theta_o;
