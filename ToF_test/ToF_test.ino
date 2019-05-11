@@ -34,7 +34,7 @@ void loop()
   Distance_Sensor.read();
   Serial.print("Distance(mm):");
   Serial.print(Distance_Sensor.ranging_data.range_mm);
-   Serial.print("\tStatus: ");
+  Serial.print("\tStatus: ");
   Serial.print(VL53L1X::rangeStatusToString(Distance_Sensor.ranging_data.range_status));
   Serial.println();
 }
