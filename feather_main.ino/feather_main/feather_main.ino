@@ -303,14 +303,14 @@ void loop() {
       //PID control for rotation
       else{
 //desired_angle will be inputted
-orientation_angle = vector_angle(ivec,jvec)
-error_rot = desired_angle-orientation angle;
-Eint_rot += error_rot;
-edot_rot= error_rot-error_prev_rot;
-u_rot = kp_rot*error_rot + ki_rot*Eint_rot +kd_rot*edot_rot;
-error_prev_rot=error_rot;
-//if u_rot is positive then need to go counterclockwise,so drive left wheel backwards and right wheel forwards
-//if u_rot is negative need to go clockwise, so drive left wheel forward and right wheel forwards
+      orientation_angle = vector_angle(ivec,jvec)
+      error_rot = desired_angle-orientation angle;
+      Eint_rot += error_rot;
+      edot_rot= error_rot-error_prev_rot;
+      u_rot = kp_rot*error_rot + ki_rot*Eint_rot +kd_rot*edot_rot;
+      error_prev_rot=error_rot;
+      //if u_rot is positive then need to go counterclockwise,so drive left wheel backwards and right wheel forwards
+      //if u_rot is negative need to go clockwise, so drive left wheel forward and right wheel forwards
 
       }
 
@@ -440,22 +440,22 @@ error_prev_rot=error_rot;
         u_d = kp_d*error_d + ki_d*Eint_d +kd_d*edot_d;
         error_prev_d=error_d;
 
-      //Path control 1 for init and current angle
-      disp_unit_i=i_vec_current/distance_current;
-      disp_unit_j=j_vec_current/distance_current;
-      sin_theta_e = cross_product(disp_unit_i,disp_unit_j,i_vec_init,j_vec_init);
-      error_theta_e = math.asin(sin_theta_e);//probably don't need arcsin
-      Eint_theta_e += error_theta_e;
-      edot_theta_e= error_theta_e-error_prev_theta_e;
-      u_theta_e = kp_theta_e*error_theta_e + ki_theta_e*Eint_theta_e +kd_theta_e*edot_theta_e;
-      error_prev_theta_e=error_theta_e;
-      //Path control 2 for orientation
-      sin_theta_o = cross_product(ivec,jvec,i_vec_init,j_vec_init);//ivec,jvec are from the vive and give it's orientation
-      error_theta_o = math.asin(sin_theta_o);//probably don't need arcsin
-      Eint_theta_o += error_theta_o;
-      edot_theta_o= error_theta_o-error_prev_theta_o;
-      u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
-      error_prev_theta_o=error_theta_o;
+        //Path control 1 for init and current angle
+        disp_unit_i=i_vec_current/distance_current;
+        disp_unit_j=j_vec_current/distance_current;
+        sin_theta_e = cross_product(disp_unit_i,disp_unit_j,i_vec_init,j_vec_init);
+        error_theta_e = math.asin(sin_theta_e);//probably don't need arcsin
+        Eint_theta_e += error_theta_e;
+        edot_theta_e= error_theta_e-error_prev_theta_e;
+        u_theta_e = kp_theta_e*error_theta_e + ki_theta_e*Eint_theta_e +kd_theta_e*edot_theta_e;
+        error_prev_theta_e=error_theta_e;
+        //Path control 2 for orientation
+        sin_theta_o = cross_product(ivec,jvec,i_vec_init,j_vec_init);//ivec,jvec are from the vive and give it's orientation
+        error_theta_o = math.asin(sin_theta_o);//probably don't need arcsin
+        Eint_theta_o += error_theta_o;
+        edot_theta_o= error_theta_o-error_prev_theta_o;
+        u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
+        error_prev_theta_o=error_theta_o;
 
 
       }
