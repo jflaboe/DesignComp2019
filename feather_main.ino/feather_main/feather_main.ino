@@ -573,7 +573,6 @@ error_prev_rot=error_rot;
       edot_theta_o= error_theta_o-error_prev_theta_o;
       u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
       error_prev_theta_o=error_theta_o;
-
       }
   }
       
