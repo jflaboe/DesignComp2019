@@ -226,25 +226,13 @@ void loop() {
       {
         Serial.println("setting in_command to true");
         in_command = true;
-        x_pos_init=x_pos;//x_pos is a serial read at the top of the code
-        y_pos_init=y_pos;//y_pos is a serial read at the top of the code
-        x_pos_f=user.data1;
-        y_pos_f=user.data2;
-        i_vec_init=x_f-x_pos_init;
-        j_vec_init=y_f-y_pos_init;
-        distance_init=math.sqrt(i_vec_init*i_vec_init + j_vec_init*j_vec_init);
-        i_vec_init/=distance_init;
-        j_vec_init/=distance_init;
-        //PID variables
-        float edot_d=0,edot_theta_e=0,edot_theta_o=0;
-        float u_d=0,u_theta_e=0,u_theta_o=0;
-        float error_d=0,error_theta_e=0,error_theta_o=0;
-        float error_prev_d=0,error_prev_theta_e=0,error_prev_theta_o=0;
-        float kp_d=0,kp_theta_e=0,kp_theta_o=0;
-        float ki_d=0,ki_theta_e=0,ki_theta_o=0;
-        float kd_d=0,kd_theta_e=0,kd_theta_o=0;
-        float kdot_d=0,kdot_theta_e=0,kdot_theta_o=0;
-        float Eint_d=0,Eint_theta_e=0,Eint_theta_o=0;
+        PWM_motor1 = user.data1;
+        PWM_motor2 = user.data2;
+        ledcWrite(PWM1channel,user.data1); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,user.data2); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, user.data3); // set direction to cw/ccw
+        digitalWrite(DIR2pin, user.data4); // set direction to cw/ccw
+        time_delay = user.data5 + millis();
       }
       else if(millis() > time_delay){
         time_delay = 0;
@@ -260,41 +248,7 @@ void loop() {
       //PID control
       else{
 
-        //Read in from (TX3=pin 8, RX3 = pin 7)
-
-        //Distance control
-        //given x_pos_init,y_pos_init,x_pos,y_pos,i_vec,j_vec,d
-        //error_d is just current distance from point
-
-        i_vec_current=x_pos_f-x_pos;
-        j_vec_current=y_pos_f-y_pos;
-        distance_current=math.sqrt(i_vec_current*i_vec_current + j_vec_current*j_vec_current);
-        error_d = distance_current;
-        Eint_d += error_d;
-        edot_d= error_d-error_prev_d;
-        u_d = kp_d*error_d + ki_d*Eint_d +kd_d*edot_d;
-        error_prev_d=error_d;
-
-        //Path control 1 for init and current angle
-        disp_unit_i=i_vec_current/distance_current;
-        disp_unit_j=j_vec_current/distance_current;
-        sin_theta_e = cross_product(disp_unit_i,disp_unit_j,i_vec_init,j_vec_init);
-        error_theta_e = math.asin(sin_theta_e);//probably don't need arcsin
-        Eint_theta_e += error_theta_e;
-        edot_theta_e= error_theta_e-error_prev_theta_e;
-        u_theta_e = kp_theta_e*error_theta_e + ki_theta_e*Eint_theta_e +kd_theta_e*edot_theta_e;
-        error_prev_theta_e=error_theta_e;
-        //Path control 2 for orientation
-        sin_theta_o = cross_product(ivec,jvec,i_vec_init,j_vec_init);//ivec,jvec are from the vive and give it's orientation
-        error_theta_o = math.asin(sin_theta_o);//probably don't need arcsin
-        Eint_theta_o += error_theta_o;
-        edot_theta_o= error_theta_o-error_prev_theta_o;
-        u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
-        error_prev_theta_o=error_theta_o;
-
-
       }
-      break;
 
       break;
 
@@ -348,15 +302,15 @@ void loop() {
       }
       //PID control for rotation
       else{
-        //desired_angle will be inputted
-        orientation_angle = vector_angle(ivec,jvec)
-        error_rot = desired_angle-orientation angle;
-        Eint_rot += error_rot;
-        edot_rot= error_rot-error_prev_rot;
-        u_rot = kp_rot*error_rot + ki_rot*Eint_rot +kd_rot*edot_rot;
-        error_prev_rot=error_rot;
-        //if u_rot is positive then need to go counterclockwise,so drive left wheel backwards and right wheel forwards
-        //if u_rot is negative need to go clockwise, so drive left wheel forward and right wheel forwards
+//desired_angle will be inputted
+orientation_angle = vector_angle(ivec,jvec)
+error_rot = desired_angle-orientation angle;
+Eint_rot += error_rot;
+edot_rot= error_rot-error_prev_rot;
+u_rot = kp_rot*error_rot + ki_rot*Eint_rot +kd_rot*edot_rot;
+error_prev_rot=error_rot;
+//if u_rot is positive then need to go counterclockwise,so drive left wheel backwards and right wheel forwards
+//if u_rot is negative need to go clockwise, so drive left wheel forward and right wheel forwards
 
       }
 
@@ -432,7 +386,82 @@ void loop() {
       
 
       break;
+    case 7: //forward
+      if (!in_command)
+      {
+        Serial.println("setting in_command to true");
+        in_command = true;
+        x_pos_init=x_pos;//x_pos is a serial read at the top of the code
+        y_pos_init=y_pos;//y_pos is a serial read at the top of the code
+        x_pos_f=user.data1;
+        y_pos_f=user.data2;
+        i_vec_init=x_f-x_pos_init;
+        j_vec_init=y_f-y_pos_init;
+        distance_init=math.sqrt(i_vec_init*i_vec_init + j_vec_init*j_vec_init);
+        i_vec_init/=distance_init;
+        j_vec_init/=distance_init;
+        //PID variables
+        float edot_d=0,edot_theta_e=0,edot_theta_o=0;
+        float u_d=0,u_theta_e=0,u_theta_o=0;
+        float error_d=0,error_theta_e=0,error_theta_o=0;
+        float error_prev_d=0,error_prev_theta_e=0,error_prev_theta_o=0;
+        float kp_d=0,kp_theta_e=0,kp_theta_o=0;
+        float ki_d=0,ki_theta_e=0,ki_theta_o=0;
+        float kd_d=0,kd_theta_e=0,kd_theta_o=0;
+        float kdot_d=0,kdot_theta_e=0,kdot_theta_o=0;
+        float Eint_d=0,Eint_theta_e=0,Eint_theta_o=0;
+      }
+      else if(millis() > time_delay){
+        time_delay = 0;
+        ledcWrite(PWM1channel,0); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,0); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, 0); // set direction to cw/ccw
+        digitalWrite(DIR2pin, 0); // set direction to cw/ccw
+        user.command = 0;
+        in_command = false;
+        last_completed = user.id; 
+        user.command = 0;
+      }
+      //PID control
+      else{
 
+        //Read in from (TX3=pin 8, RX3 = pin 7)
+
+        //Distance control
+        //given x_pos_init,y_pos_init,x_pos,y_pos,i_vec,j_vec,d
+        //error_d is just current distance from point
+
+        i_vec_current=x_pos_f-x_pos;
+        j_vec_current=y_pos_f-y_pos;
+        distance_current=math.sqrt(i_vec_current*i_vec_current + j_vec_current*j_vec_current);
+        error_d = distance_current;
+        Eint_d += error_d;
+        edot_d= error_d-error_prev_d;
+        u_d = kp_d*error_d + ki_d*Eint_d +kd_d*edot_d;
+        error_prev_d=error_d;
+
+      //Path control 1 for init and current angle
+      disp_unit_i=i_vec_current/distance_current;
+      disp_unit_j=j_vec_current/distance_current;
+      sin_theta_e = cross_product(disp_unit_i,disp_unit_j,i_vec_init,j_vec_init);
+      error_theta_e = math.asin(sin_theta_e);//probably don't need arcsin
+      Eint_theta_e += error_theta_e;
+      edot_theta_e= error_theta_e-error_prev_theta_e;
+      u_theta_e = kp_theta_e*error_theta_e + ki_theta_e*Eint_theta_e +kd_theta_e*edot_theta_e;
+      error_prev_theta_e=error_theta_e;
+      //Path control 2 for orientation
+      sin_theta_o = cross_product(ivec,jvec,i_vec_init,j_vec_init);//ivec,jvec are from the vive and give it's orientation
+      error_theta_o = math.asin(sin_theta_o);//probably don't need arcsin
+      Eint_theta_o += error_theta_o;
+      edot_theta_o= error_theta_o-error_prev_theta_o;
+      u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
+      error_prev_theta_o=error_theta_o;
+
+
+      }
+  }
+      
+}
     case 8: //Arc
       if (!in_command)
       {
