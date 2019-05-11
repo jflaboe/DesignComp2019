@@ -353,7 +353,7 @@ void loop() {
       
 
       break;
-    case 7:
+    case 7: //forward
       if (!in_command)
       {
         Serial.println("setting in_command to true");
@@ -368,18 +368,15 @@ void loop() {
         i_vec_init/=distance_init;
         j_vec_init/=distance_init;
         //PID variables
-        int Eint=0;
-        float edot=0;
-        float u=0;
-        float error=0;
-        float unew=0;
-        float error_prev=0;
-        float kp_d=0;
-        float ki_d=0;
-        float kdot_d=0;
-        float kp_p=0;
-        float ki_p=0;
-        float kdot_p=0;
+        float edot_d=0,edot_theta_e=0,edot_theta_o=0;
+        float u_d=0,u_theta_e=0,u_theta_o=0;
+        float error_d=0,error_theta_e=0,error_theta_o=0;
+        float error_prev_d=0,error_prev_theta_e=0,error_prev_theta_o=0;
+        float kp_d=0,kp_theta_e=0,kp_theta_o=0;
+        float ki_d=0,ki_theta_e=0,ki_theta_o=0;
+        float kd_d=0,kd_theta_e=0,kd_theta_o=0;
+        float kdot_d=0,kdot_theta_e=0,kdot_theta_o=0;
+        float Eint_d=0,Eint_theta_e=0,Eint_theta_o=0;
       }
       else if(millis() > time_delay){
         time_delay = 0;
@@ -433,8 +430,57 @@ void loop() {
       
 }
 
-//PID for Rotation
-/*
+
+
+
+
+
+
+
+
+
+
+    case 8: //Rotation
+      if (!in_command)
+      {
+        Serial.println("setting in_command to true");
+        in_command = true;
+        x_pos_init=x_pos;//x_pos is a serial read at the top of the code
+        y_pos_init=y_pos;//y_pos is a serial read at the top of the code
+        x_pos_f=user.data1;
+        y_pos_f=user.data2;
+        i_vec_init=x_f-x_pos_init;
+        j_vec_init=y_f-y_pos_init;
+        distance_init=math.sqrt(i_vec_init*i_vec_init + j_vec_init*j_vec_init);
+        i_vec_init/=distance_init;
+        j_vec_init/=distance_init;
+        //PID variables
+        int Eint_rot=0;
+        float edot_rot=0;
+        float u_rot=0;
+        float error_rot=0;
+        float unew_rot=0;
+        float error_prev_rot=0;
+        float kp_d_rot=0;
+        float ki_d_rot=0;
+        float kdot_d_rot=0;
+        float kp_p_rot=0;
+        float ki_p_rot=0;
+        float kdot_p_rot=0;
+      }
+      else if(millis() > time_delay){
+        time_delay = 0;
+        ledcWrite(PWM1channel,0); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,0); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, 0); // set direction to cw/ccw
+        digitalWrite(DIR2pin, 0); // set direction to cw/ccw
+        user.command = 0;
+        in_command = false;
+        last_completed = user.id; 
+        user.command = 0;
+      }
+      //PID control for rotation
+      else{
 //desired_angle will be inputted
 orientation_angle = vector_angle(ivec,jvec)
 error_rot = desired_angle-orientation angle;
@@ -445,10 +491,52 @@ error_prev_rot=error_rot;
 //if u_rot is positive then need to go counterclockwise,so drive left wheel backwards and right wheel forwards
 //if u_rot is negative need to go clockwise, so drive left wheel forward and right wheel forwards
 
-*/
+
+      }
+  }
+      
+}
+
+    case 9: //Arc
+      if (!in_command)
+      {
+        Serial.println("setting in_command to true");
+        in_command = true;
+        x_pos_init=x_pos;//x_pos is a serial read at the top of the code
+        y_pos_init=y_pos;//y_pos is a serial read at the top of the code
+        x_pos_f=user.data1;
+        y_pos_f=user.data2;
+        i_vec_init=x_f-x_pos_init;
+        j_vec_init=y_f-y_pos_init;
+        distance_init=math.sqrt(i_vec_init*i_vec_init + j_vec_init*j_vec_init);
+        i_vec_init/=distance_init;
+        j_vec_init/=distance_init;
+        //PID variables
+        float edot_d=0,edot_r=0,edot_theta_o=0;
+        float u_d=0,u_r=0,u_theta_o=0;
+        float error_d=0,error_r=0,error_theta_o=0;
+        float error_prev_d=0,error_prev_r=0,error_prev_theta_o=0;
+        float kp_d=0,kp_r=0,kp_theta_o=0;
+        float ki_d=0,ki_r=0,ki_theta_o=0;
+        float kd_d=0,kd_r=0,kd_theta_o=0;
+        float kdot_d=0,kdot_r=0,kdot_theta_o=0;
+        float Eint_d=0,Eint_r=0,Eint_theta_o=0;
 
 
-/*
+      }
+      else if(millis() > time_delay){
+        time_delay = 0;
+        ledcWrite(PWM1channel,0); // pwm channel, speed 0-255
+        ledcWrite(PWM2channel,0); // pwm channel, speed 0-255
+        digitalWrite(DIR1pin, 0); // set direction to cw/ccw
+        digitalWrite(DIR2pin, 0); // set direction to cw/ccw
+        user.command = 0;
+        in_command = false;
+        last_completed = user.id; 
+        user.command = 0;
+      }
+      //PID control for rotation
+      else{
 //PID for arc
 //given arc center, angle to go on arc
         //Distance control
@@ -486,30 +574,21 @@ error_prev_rot=error_rot;
       u_theta_o = kp_theta_o*error_theta_o + ki_theta_o*Eint_theta_o +kd_theta_o*edot_theta_o;
       error_prev_theta_o=error_theta_o;
 
-*/
-
+      }
+  }
+      
+}
 
 
 float vector_angle(float ivec,float jvec){
   float angle;
-  if (ivec>0&& jvec>0){
-  angle = math.atan(jvec/ivec);
+  if (jvec>0){
+  angle = math.arcos(ivec);
+  }
+  else  if (jvec<0){
+  angle = 360 - math.arcos(ivec);
+  }
   return angle;
-  }
-  else if ((ivec<0 && jvec>0)||(ivec<0 && jvec<0)){
-    angle = math.atan(jvec/ivec)+180;
-    return angle;
-  }
-  /*
-  else if (ivec<0 && jvec<0){
-    angle = math.atan(jvec/ivec)+180;
-    return angle;
-  }
-  */
-  else if (ivec>0 && jvec<0 ){
-    angle = math.atan(jvec/ivec)+360;
-    return angle;
-  }
 }
 
 float dot_product(float x_1,float y_1,float x_2,float y_2){
