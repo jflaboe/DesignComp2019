@@ -459,9 +459,7 @@ error_prev_rot=error_rot;
 
 
       }
-  }
-      
-}
+
     case 8: //Arc
       if (!in_command)
       {
